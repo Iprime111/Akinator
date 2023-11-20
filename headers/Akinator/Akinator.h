@@ -42,7 +42,7 @@ enum AkinatorCommand {
 AkinatorError SaveDatabase       (Akinator *akinator, char *databaseFilename);
 AkinatorError ReadDatabase       (Akinator *akinator, char *databaseFilename);
 AkinatorError CreateNewDatabase  (Akinator *akinator);
-AkinatorError InitAkinator       (Akinator *akinator, char *databaseFilename, const AkinatorLocale *locale = &RussianLocale);
+AkinatorError InitAkinator       (Akinator *akinator, char *databaseFilename, const AkinatorLocale *locale = &LocalesArray [0]);
 AkinatorError DestroyAkinator    (Akinator *akinator);
 AkinatorError GuessNode          (Akinator *akinator);
 AkinatorError CompareNodes       (Akinator *akinator);

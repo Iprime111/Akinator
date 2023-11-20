@@ -18,7 +18,7 @@ namespace Tree {
     TreeError PrintNodeValue (Node <char *> *node, FILE *stream) {
         PushLog (4);
 
-        fprintf (stream, "\" %s \"", node->nodeData);
+        fprintf (stream, "\"%s\"", node->nodeData);
 
         RETURN NO_TREE_ERRORS;
     }

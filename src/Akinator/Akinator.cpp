@@ -39,7 +39,7 @@ AkinatorError GuessNode (Akinator *akinator) {
 AkinatorError CompareNodes (Akinator *akinator) {
     PushLog (1);
 
-    printf ("%s\n", akinator->locale->comparisonRequestMessage);
+    printf ("\n%s\n", akinator->locale->comparisonRequestMessage);
 
     size_t bufferSize = 0;
 
@@ -78,6 +78,8 @@ AkinatorError CompareNodes (Akinator *akinator) {
 
     FindNode (first);
     FindNode (second);
+
+    printf ("\n");
 
     AkinatorError error = FindDiff (akinator, &firstNodePath, &secondNodePath, firstNode, secondNode);
     DestroyAllBuffers ();
@@ -150,7 +152,7 @@ AkinatorError GetNodeDescription (Akinator *akinator) {
     char *nodeNameBuffer = NULL;
     size_t bufferSize    = 0;
 
-    printf ("%s ", akinator->locale->descriptionRequestMessage);
+    printf ("\n%s ", akinator->locale->descriptionRequestMessage);
 
     GetNameLine (&nodeNameBuffer, &bufferSize); 
 

@@ -1,3 +1,19 @@
+LOCALE_FIELD (localeName,                    "Русский")
+LOCALE_FIELD (changeLocaleMessage,           "Введите номер желаемого языка:")
+LOCALE_FIELD (wrongLocaleId,                 "Неверный номер языка")
+
+LOCALE_FIELD (quitCommand,                   "Выйти из программы")
+LOCALE_FIELD (loadDatabaseCommand,           "Загрузить базу данных из файла")
+LOCALE_FIELD (newDatabaseCommand,            "Создать новую пустую базу данных")
+LOCALE_FIELD (saveDatabaseCommand,           "сохранить базу данных")
+LOCALE_FIELD (guessNodeCommand,              "Отгадать объект")
+LOCALE_FIELD (getDescriptionCommand,         "Получить описание")
+LOCALE_FIELD (compareNodesCommand,           "Сравнить два объекта")
+LOCALE_FIELD (changeLanguageCommand,         "Сменить язык")
+
+LOCALE_FIELD (databaseSaveError,             "Произошла ошибка во время сохранения базы данных")
+LOCALE_FIELD (initializationError,           "Произошла ошибка во время инициализации акинатора")
+
 LOCALE_FIELD (defaultRecord,                 "неизвестно что")
 LOCALE_FIELD (nodeNotFound,                  "Простите, я ничего не знаю о %s")
 LOCALE_FIELD (comparisonRequestMessage,      "Введите два имени для сравнения на разных строках:")

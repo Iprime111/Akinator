@@ -6,6 +6,22 @@
 #define LOCALE_FIELD_INIT(NAME) const char *NAME = NULL
 
 struct AkinatorLocale {
+    LOCALE_FIELD_INIT (localeName);
+    LOCALE_FIELD_INIT (changeLocaleMessage);
+    LOCALE_FIELD_INIT (wrongLocaleId);
+
+    LOCALE_FIELD_INIT (quitCommand);
+    LOCALE_FIELD_INIT (loadDatabaseCommand);
+    LOCALE_FIELD_INIT (newDatabaseCommand);
+    LOCALE_FIELD_INIT (saveDatabaseCommand);
+    LOCALE_FIELD_INIT (guessNodeCommand);  
+    LOCALE_FIELD_INIT (getDescriptionCommand);
+    LOCALE_FIELD_INIT (compareNodesCommand);
+    LOCALE_FIELD_INIT (changeLanguageCommand);
+
+    LOCALE_FIELD_INIT (databaseSaveError);
+    LOCALE_FIELD_INIT (initializationError);
+
     LOCALE_FIELD_INIT (defaultRecord);
     LOCALE_FIELD_INIT (nodeNotFound);
     LOCALE_FIELD_INIT (comparisonRequestMessage);
@@ -30,17 +46,21 @@ struct AkinatorLocale {
 
 #undef LOCALE_FIElD_INIT
 
+const size_t LOCALES_COUNT = 3;
+
 #define LOCALE_FIELD(NAME, VALUE) .NAME = VALUE,
 
-const AkinatorLocale EnglishLocale {
-    #include "Locales/EnglishLocale.h"
+const AkinatorLocale LocalesArray [] {
+    {
+        #include "Locales/EnglishLocale.h"
+    },
+    {
+        #include "Locales/RussianLocale.h"
+    },
+    {
+        #include "Locales/HyperboreanLocale.h"
+    },
 };
-
-const AkinatorLocale RussianLocale {
-    #include "Locales/RussianLocale.h"
-};
-
-
 #undef LOCALE_FIElD
 
 #endif

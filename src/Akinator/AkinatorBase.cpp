@@ -107,20 +107,21 @@ static AkinatorError ReadDatabaseChunck (Akinator *akinator, Tree::Node <char *>
 static AkinatorError ReadNodeContent (Tree::Node <char *> *node, FILE *database, char *scanBuffer) {
     PushLog (3);
 
-    fscanf (database, "%s", scanBuffer);
+    fscanf (database, " ");
 
-    if (scanBuffer [0] != '\"') {
+    if (getc (database) != '\"') {
         RETURN DATABASE_ERROR;
     }
 
-    char *nodeContent = (char *) calloc (DATABASE_CHUNK_MAX_SIZE, sizeof (char));
+    char *nodeContent = NULL;
+    size_t bufferSize = 0;
+    getdelim (&nodeContent, &bufferSize, '\"', database);
+    getc (database);
 
-    fscanf(database, "%s", scanBuffer);
-    
-    while (scanBuffer [0] != '\"') {
-        strcat (nodeContent, scanBuffer);
-        fscanf (database, "%s", scanBuffer);
-    }
+    size_t nodeContentLength = strlen (nodeContent);
+
+    if (nodeContentLength > 0)
+        nodeContent [nodeContentLength - 1] = '\0'; 
 
     node->nodeData = nodeContent; 
 
