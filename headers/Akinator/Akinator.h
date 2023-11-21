@@ -23,6 +23,8 @@ struct Akinator {
     AkinatorError errors = NO_AKINATOR_ERRORS;
 
     const AkinatorLocale *locale = NULL;
+
+    char *databaseFilename = NULL;
 };
 
 enum UserAnswer {
@@ -34,7 +36,7 @@ enum UserAnswer {
 #define COMMAND(ID, NAME, DESCRIPTION, ...) NAME##_COMMAND = ID,
 
 enum AkinatorCommand {
-    #include "AkinatorCommands.h"
+    #include "AkinatorCommands.def"
 };
 
 #undef COMMAND
@@ -47,7 +49,23 @@ AkinatorError DestroyAkinator    (Akinator *akinator);
 AkinatorError GuessNode          (Akinator *akinator);
 AkinatorError CompareNodes       (Akinator *akinator);
 AkinatorError GetNodeDescription (Akinator *akinator);
+AkinatorError VerifyAkinator     (Akinator *akinator); 
 
 int NodeDataComparator (void *node1, void *node2);
+
+#define WriteAkinatorErrors(akinator, error) (akinator)->errors = (AkinatorError) ((akinator)->errors | (error))
+#define ReturnAkinatorErrors(akinator, error)       \
+    do {                                            \
+        if (error != NO_AKINATOR_ERRORS) {          \
+            WriteAkinatorErrors (akinator, error);  \
+            RETURN error;                           \
+        }                                           \
+    } while (0)
+
+#define Verification(akinator)                              \
+    do {                                                    \
+        AkinatorError errors = VerifyAkinator (akinator);   \
+        ReturnAkinatorErrors (akinator, errors);            \
+    } while (0)
 
 #endif

@@ -12,23 +12,57 @@
 #include "TreeDefinitions.h"
 #include "TreeExtensions.h"
 
-static AkinatorError ReadDatabaseChunck (Akinator *akinator, Tree::Node <char *> *parentNode, Tree::TreeEdge direction, FILE *database, char *scanBuffer); 
-static AkinatorError ReadNodeContent    (Tree::Node <char *> *node, FILE *database, char *scanBuffer);
+static AkinatorError ReadDatabaseChunck     (Akinator *akinator, Tree::Node <char *> *parentNode, Tree::TreeEdge direction, FILE *database, char *scanBuffer); 
+static AkinatorError ReadNodeContent        (Tree::Node <char *> *node, FILE *database, char *scanBuffer);
+static AkinatorError VerifyAkinatorTreeNode (const Tree::Node <char *> *root); 
 
-#define WriteAkinatorErrors(akinator, error) (akinator)->errors = (AkinatorError) ((akinator)->errors | (error))
-#define ReturnAkinatorErrors(akinator, error)       \
-    do {                                            \
-        if (error != NO_AKINATOR_ERRORS) {          \
-            WriteAkinatorErrors (akinator, error);  \
-            RETURN error;                           \
-        }                                           \
-    } while (0)
+AkinatorError VerifyAkinator (Akinator *akinator) {
+    PushLog (3);
+
+    if (!akinator) {
+        RETURN NO_AKINATOR_ERRORS;
+    }
+
+    ReturnAkinatorErrors (akinator, VerifyAkinatorTreeNode (akinator->databaseTree.root));
+
+    RETURN akinator->errors;
+}
+
+static AkinatorError VerifyAkinatorTreeNode (const Tree::Node <char *> *root) {
+    PushLog (4);
+
+    if (!root) {
+        RETURN TREE_ERROR;
+    }
+
+    if ((root->left && !root->right) || (root->right && !root->left)) {
+        RETURN TREE_ERROR;
+    }
+
+    if (!root->nodeData) {
+        RETURN DATABASE_ERROR;
+    }
+
+    if (root->left) {
+        VerifyAkinatorTreeNode (root->left);
+        VerifyAkinatorTreeNode (root->right);
+    }
+
+    RETURN NO_AKINATOR_ERRORS;
+}
 
 AkinatorError ReadDatabase (Akinator *akinator, char *databaseFilename) {
     PushLog (2);
+    
+    custom_assert (akinator,         pointer_is_null, NULL_STRUCT_POINTER);
+    custom_assert (databaseFilename, pointer_is_null, DATABASE_ERROR);
 
-    FILE *database = fopen (databaseFilename, "r");
-    char scanBuffer [DATABASE_CHUNK_MAX_SIZE] = "";
+    if (access (databaseFilename, F_OK) != 0) {
+        ReturnAkinatorErrors (akinator, DATABASE_ERROR);
+    }
+
+    FILE *database = fopen (databaseFilename, "r");  
+    char *scanBuffer = (char *) calloc (DATABASE_CHUNK_MAX_SIZE, sizeof (char));
 
     AkinatorError error = ReadDatabaseChunck (akinator, NULL, Tree::NO_EDGE, database, scanBuffer); 
 
@@ -37,8 +71,10 @@ AkinatorError ReadDatabase (Akinator *akinator, char *databaseFilename) {
         Tree::TreeDump (&akinator->databaseTree);
         Tree::DestroyTree (&akinator->databaseTree);
         ReturnAkinatorErrors (akinator, error);
+        free (scanBuffer);
     }
 
+    free (scanBuffer);
     fclose (database);
     RETURN NO_AKINATOR_ERRORS;
 }
@@ -50,12 +86,12 @@ static AkinatorError ReadDatabaseChunck (Akinator *akinator, Tree::Node <char *>
     custom_assert (database,   pointer_is_null, DATABASE_ERROR);
     custom_assert (scanBuffer, pointer_is_null, DATABASE_ERROR);
     
-    if (!fscanf (database, "%s", scanBuffer)) {
+    if (fscanf (database, "%s", scanBuffer) == 0) {
         ReturnAkinatorErrors (akinator, DATABASE_ERROR);
     }
 
     if (scanBuffer [0] != '(') {
-        if (!strcmp (scanBuffer, "nil")) {
+        if (strcmp (scanBuffer, "nil") == 0) {
             RETURN NO_AKINATOR_ERRORS;
         } else {
             ReturnAkinatorErrors (akinator, DATABASE_ERROR);
@@ -131,6 +167,10 @@ static AkinatorError ReadNodeContent (Tree::Node <char *> *node, FILE *database,
 AkinatorError SaveDatabase (Akinator *akinator, char *databaseFilename) {
     PushLog (2);
 
+    custom_assert (databaseFilename, pointer_is_null, DATABASE_ERROR);
+
+    Verification (akinator);
+
     FILE *database = fopen (databaseFilename, "w");
 
     if (!database) {
@@ -161,17 +201,23 @@ AkinatorError InitAkinator (Akinator *akinator, char *databaseFilename, const Ak
 
     akinator->locale = locale;
 
-
     akinator->errors = NO_AKINATOR_ERRORS;
     if (Tree::InitTree (&akinator->databaseTree) != Tree::NO_TREE_ERRORS) {
         akinator->errors = TREE_ERROR;
     }
 
     if (databaseFilename && (access (databaseFilename, F_OK) == 0)) {
+        char *savedDatabaseFilename = (char *) calloc (strlen (databaseFilename) + 1, sizeof (char));
+        strcpy (savedDatabaseFilename, databaseFilename);
+
         ReadDatabase (akinator, databaseFilename);
+        akinator->databaseFilename = savedDatabaseFilename;
     } else {
         CreateNewDatabase (akinator);
+        akinator->databaseFilename = NULL;
     }
+    
+    Verification (akinator);
 
     RETURN akinator->errors;
 }
@@ -181,6 +227,7 @@ AkinatorError DestroyAkinator (Akinator *akinator) {
 
     custom_assert (akinator, pointer_is_null, NULL_STRUCT_POINTER);
 
+    free (akinator->databaseFilename);
     Tree::DestroyTree (&akinator->databaseTree);
 
     RETURN NO_AKINATOR_ERRORS;

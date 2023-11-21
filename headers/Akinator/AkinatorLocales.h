@@ -46,21 +46,21 @@ struct AkinatorLocale {
 
 #undef LOCALE_FIElD_INIT
 
-const size_t LOCALES_COUNT = 3;
-
 #define LOCALE_FIELD(NAME, VALUE) .NAME = VALUE,
 
 const AkinatorLocale LocalesArray [] {
     {
-        #include "Locales/EnglishLocale.h"
+        #include "Locales/EnglishLocale.def"
     },
     {
-        #include "Locales/RussianLocale.h"
+        #include "Locales/RussianLocale.def"
     },
     {
-        #include "Locales/HyperboreanLocale.h"
+        #include "Locales/HyperboreanLocale.def"
     },
 };
+
+const size_t LOCALES_COUNT = sizeof (LocalesArray) / sizeof (AkinatorLocale);
 #undef LOCALE_FIElD
 
 #endif

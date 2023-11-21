@@ -8,16 +8,9 @@ static void ChangeLocale  (Akinator *akinator);
 
 int main () {
     PushLog (1);
- 
     Akinator akinator = {};
 
-    #define COMMAND(ID, NAME, DESCRIPTION, ...) \
-        if (commandNumber == ID) {              \
-            __VA_ARGS__;                        \
-            continue;                           \
-        }
-
-    InitAkinator (&akinator, "", &LocalesArray [0]);
+    InitAkinator (&akinator, "./летопись.дуб", &LocalesArray [0]);
 
     while (true) {
         PrintCommands (&akinator);
@@ -31,7 +24,12 @@ int main () {
 
         getchar ();
 
-        #include "Akinator/AkinatorCommands.h"
+        #define COMMAND(ID, NAME, DESCRIPTION, ...) \
+            if (commandNumber == ID) {              \
+                __VA_ARGS__;                        \
+                continue;                           \
+            }
+        #include "Akinator/AkinatorCommands.def"
 
         printf ("%s\n", akinator.locale->wrongCommand);
     }
@@ -49,7 +47,7 @@ static void PrintCommands (Akinator *akinator) {
     #define COMMAND(ID, NAME, DESCRIPTION, ...) \
         printf ("%d. %s\n", ID, DESCRIPTION);
 
-    #include "Akinator/AkinatorCommands.h"
+    #include "Akinator/AkinatorCommands.def"
 
     #undef COMMAND
 

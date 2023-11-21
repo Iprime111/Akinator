@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <festival/festival.h>
 
 #include "Akinator/Akinator.h"
 #include "Buffer.h"
@@ -17,12 +18,12 @@ static AkinatorError AddRecord  (Akinator *akinator, Tree::Node <char *> *node);
 static AkinatorError ScanAnswer (Akinator *akinator, UserAnswer *answer);
 
 static AkinatorError PrintNodeDiff (Akinator *akinator, Tree::Node <char *> *node, Buffer <Tree::TreeEdge> *nodePath, size_t pathOffset);
-static AkinatorError GetNameLine   (char **buffer, size_t *bufferSize);
 
 AkinatorError GuessNode (Akinator *akinator) {
     PushLog (1);
 
-    custom_assert (akinator,                    pointer_is_null, NULL_STRUCT_POINTER);
+    Verification (akinator);
+
     custom_assert (akinator->databaseTree.root, pointer_is_null, NULL_TREE_POINTER);
 
     Tree::Node <char *> *currentNode = akinator->databaseTree.root;
@@ -39,15 +40,15 @@ AkinatorError GuessNode (Akinator *akinator) {
 AkinatorError CompareNodes (Akinator *akinator) {
     PushLog (1);
 
-    printf ("\n%s\n", akinator->locale->comparisonRequestMessage);
+    Verification (akinator);
 
-    size_t bufferSize = 0;
+    printf ("\n%s\n", akinator->locale->comparisonRequestMessage);
 
     char *firstNodeName  = NULL;
     char *secondNodeName = NULL;
-            
-    GetNameLine (&firstNodeName,  &bufferSize);
-    GetNameLine (&secondNodeName, &bufferSize);
+    
+    scanf ("%ms[^\n]", &firstNodeName);
+    scanf ("%ms[^\n]", &secondNodeName);
 
     Buffer <Tree::TreeEdge> firstNodePath  = {};
     Buffer <Tree::TreeEdge> secondNodePath = {};
@@ -94,6 +95,12 @@ static AkinatorError FindDiff (Akinator *akinator, Buffer <Tree::TreeEdge> *firs
                             Tree::Node <char *> *firstNode, Tree::Node <char *> *secondNode) {
     PushLog (2);
 
+    custom_assert (akinator,       pointer_is_null, NULL_STRUCT_POINTER);
+    custom_assert (firstNodePath,  pointer_is_null, TREE_ERROR);
+    custom_assert (secondNodePath, pointer_is_null, TREE_ERROR);
+    custom_assert (firstNode,      pointer_is_null, TREE_ERROR);
+    custom_assert (secondNode,     pointer_is_null, TREE_ERROR);
+
     size_t firstPathIndex  = 0;
     size_t secondPathIndex = 0;
 
@@ -102,15 +109,13 @@ static AkinatorError FindDiff (Akinator *akinator, Buffer <Tree::TreeEdge> *firs
 
     Tree::Node <char *> *firstCurrentNode  = akinator->databaseTree.root;
     Tree::Node <char *> *secondCurrentNode = akinator->databaseTree.root;
-
-    while (firstNodePath->data [firstPathIndex] == secondNodePath->data [secondPathIndex] && firstPathIndex < firstNodePath->currentIndex) {
+    
+    for (firstPathIndex = 0, secondPathIndex = 0; firstNodePath->data [firstPathIndex] == secondNodePath->data [secondPathIndex] &&
+            firstPathIndex < firstNodePath->currentIndex; firstPathIndex++, secondPathIndex++) { 
         printf ("\t%s\n", firstCurrentNode->nodeData);
 
         firstCurrentNode  = Tree::NextNode (firstCurrentNode,  firstNodePath->data  [firstPathIndex]);
         secondCurrentNode = Tree::NextNode (secondCurrentNode, secondNodePath->data [secondPathIndex]); 
-        
-        firstPathIndex++;
-        secondPathIndex++;
     }
 
     printf (akinator->locale->firstItemDifferencesMessage, firstNode->nodeData);
@@ -129,9 +134,14 @@ static AkinatorError FindDiff (Akinator *akinator, Buffer <Tree::TreeEdge> *firs
 static AkinatorError PrintNodeDiff (Akinator *akinator, Tree::Node <char *> *node, Buffer <Tree::TreeEdge> *nodePath, size_t pathOffset) {
     PushLog (4);
 
-    size_t nodePathIndex = pathOffset;
+    custom_assert (akinator, pointer_is_null, NULL_STRUCT_POINTER);
 
-    while (nodePathIndex < nodePath->currentIndex) {
+    custom_assert (node,     pointer_is_null, TREE_ERROR);
+    custom_assert (nodePath, pointer_is_null, TREE_ERROR);
+
+    custom_assert (pathOffset < nodePath->currentIndex, invalid_value, TREE_ERROR);
+
+    for (size_t nodePathIndex = pathOffset; nodePathIndex < nodePath->currentIndex; nodePathIndex++) {
         printf ("\t");
 
         if (nodePath->data [nodePathIndex] == Tree::LEFT_CHILD)
@@ -139,8 +149,7 @@ static AkinatorError PrintNodeDiff (Akinator *akinator, Tree::Node <char *> *nod
 
         printf (" %s\n", node->nodeData);
 
-        node = Tree::NextNode (node, nodePath->data [nodePathIndex]);
-        nodePathIndex++;
+        node = Tree::NextNode (node, nodePath->data [nodePathIndex]); 
     }
 
     RETURN NO_AKINATOR_ERRORS;
@@ -149,12 +158,13 @@ static AkinatorError PrintNodeDiff (Akinator *akinator, Tree::Node <char *> *nod
 AkinatorError GetNodeDescription (Akinator *akinator) {
     PushLog (1);
 
+    Verification (akinator);
+
     char *nodeNameBuffer = NULL;
-    size_t bufferSize    = 0;
 
     printf ("\n%s ", akinator->locale->descriptionRequestMessage);
 
-    GetNameLine (&nodeNameBuffer, &bufferSize); 
+    scanf("%ms[^\n]", &nodeNameBuffer);
 
     Tree::Node <char *> *node = NULL;
     Buffer <Tree::TreeEdge> nodePath = {};
@@ -174,12 +184,7 @@ AkinatorError GetNodeDescription (Akinator *akinator) {
     printf (akinator->locale->descriptionTitle, node->nodeData);
     printf ("\n");
 
-    Tree::Node <char *> *currentNode = akinator->databaseTree.root;
-
-    for (size_t pathIndex = 0; pathIndex < nodePath.currentIndex; pathIndex++) {
-        printf ("\t%s\n", currentNode->nodeData);
-        currentNode = Tree::NextNode (currentNode, nodePath.data [pathIndex]);
-    }
+    PrintNodeDiff (akinator, akinator->databaseTree.root, &nodePath, 0);
 
     free (nodeNameBuffer);
     DestroyBuffer (&nodePath);
@@ -196,6 +201,7 @@ static AkinatorError SwitchNode (Akinator *akinator, Tree::Node <char *> **node)
     printf (akinator->locale->question, (*node)->nodeData, akinator->locale->positiveAnswer, akinator->locale->negativeAnswer);
     printf ("\n");
     
+
     UserAnswer answer = NO_ANSWER;
     ScanAnswer (akinator, &answer);
 
@@ -213,8 +219,9 @@ static AkinatorError SwitchNode (Akinator *akinator, Tree::Node <char *> **node)
 static AkinatorError MakeGuess (Akinator *akinator, Tree::Node <char *> *node) {
     PushLog (3);
 
-    custom_assert (akinator, pointer_is_null, NULL_STRUCT_POINTER);
-    custom_assert (node,     pointer_is_null, TREE_ERROR);
+    custom_assert (node, pointer_is_null, TREE_ERROR);
+
+    Verification (akinator);
 
     printf (akinator->locale->makeGuess, node->nodeData, akinator->locale->positiveAnswer, akinator->locale->negativeAnswer);
     printf ("\n");
@@ -240,20 +247,16 @@ static AkinatorError AddRecord (Akinator *akinator, Tree::Node <char *> *node) {
     custom_assert (akinator, pointer_is_null, NULL_STRUCT_POINTER);
     custom_assert (node,     pointer_is_null, TREE_ERROR);
 
-    size_t bufferSize = 0;
-
     char *newNodeDataBuffer  = NULL;
     char *questionDataBuffer = NULL;
     
-    getc (stdin);
-
     printf ("%s\n", akinator->locale->wrongAssumption);
-    GetNameLine (&newNodeDataBuffer, &bufferSize);
+    scanf ("%ms[^\n]", &newNodeDataBuffer);
 
     printf (akinator->locale->newNodeSpecificQuestion, newNodeDataBuffer, node->nodeData);
     printf ("\n");
-    GetNameLine (&questionDataBuffer, &bufferSize);
-   
+    scanf ("%ms[^\n]", &questionDataBuffer);
+
     Tree::AddNode (&akinator->databaseTree, node, Tree::LEFT_CHILD);
     Tree::AddNode (&akinator->databaseTree, node, Tree::RIGHT_CHILD);
     
@@ -266,7 +269,10 @@ static AkinatorError AddRecord (Akinator *akinator, Tree::Node <char *> *node) {
 
 static AkinatorError ScanAnswer (Akinator *akinator, UserAnswer *answer) {
     PushLog (4);
-    
+   
+    custom_assert (akinator, pointer_is_null, NULL_STRUCT_POINTER);
+    custom_assert (answer,   pointer_is_null, NULL_STRUCT_POINTER);
+
     char scanBuffer [DATABASE_CHUNK_MAX_SIZE] = "";
     scanf ("%s", scanBuffer);
 
@@ -283,12 +289,3 @@ static AkinatorError ScanAnswer (Akinator *akinator, UserAnswer *answer) {
 
     RETURN NO_AKINATOR_ERRORS;
 }
-
-static AkinatorError GetNameLine (char **buffer, size_t *bufferSize) {
-
-    getline (buffer, bufferSize, stdin);
-    (*buffer) [strlen (*buffer) - 1] = '\0';
-
-    return NO_AKINATOR_ERRORS;
-}
-
